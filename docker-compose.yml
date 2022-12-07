@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  api-gateway:
+    build:
+      dockerfile: Dockerfile
+      context: .
+      # Only will build development stage from our dockerfile
+      target: development
+    env_file:
+        - .env
+    volumes:
+      - .:/usr/src/api-gateway
+    # Run in dev Mode: npm run start:dev
+    command: npm run watch-poll
+    ports:
+      - 3000:3000

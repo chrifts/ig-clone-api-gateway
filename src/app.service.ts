@@ -1,25 +1,26 @@
-import { Injectable } from '@nestjs/common';
-import { ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservices';
+import { Inject, Injectable } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { Observable, timeout } from 'rxjs';
 
 @Injectable()
 export class AppService {
-  private client: ClientProxy
 
-  constructor() {
-    this.client = ClientProxyFactory.create({
-      transport: Transport.REDIS,
-      options: {
-        host: 'redis',
-        port: 6379        
-      }
-    })
-  }
+  constructor(
+    @Inject(process.env.POST_SERVICE_NAME) private postServiceClient: ClientProxy,
+  ) { }
 
-  checkHealth(): string {
+
+  checkTCPHealth(): string {
     return 'OK!';
   }
 
-  emitTestEvent(): void {
-    this.client.emit<number>('user_created', {user: "pepe", id: "1"});
+  checkServiceHealth(): Observable<number> {
+    return this.postServiceClient.emit<number>('check_health', { user: "pepe", id: "1" });
+  }
+
+  getHello(): Observable<string> {
+    return this.postServiceClient
+      .send<string>({ cmd: 'greeting' }, 'Hi Coder')
+      .pipe(timeout(5000));
   }
 }
